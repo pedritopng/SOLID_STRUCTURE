@@ -4,27 +4,42 @@ from tkinter import filedialog, messagebox
 import os
 
 
+def process_file(input_filename):
+    """
+    Reads the input file, automatically detecting if it's CSV or Excel.
+    """
+    # Check the file extension to decide how to read it
+    _, file_extension = os.path.splitext(input_filename)
+
+    if file_extension.lower() == '.csv':
+        # Load as a CSV, skipping the first row, no header
+        df = pd.read_csv(input_filename, header=None, skiprows=1)
+    elif file_extension.lower() in ['.xlsx', '.xls']:
+        # Load as an Excel file, skipping the first row, no header
+        df = pd.read_excel(input_filename, header=None, skiprows=1)
+    else:
+        # If the file type is not supported, raise an error
+        raise ValueError(f"Unsupported file type: {file_extension}")
+
+    # Assign column names, assuming the structure is consistent
+    df.columns = [
+        'NIVEL', 'QTD', 'DESCRICAO', 'CODIGO', 'MATERIA_PRIMA',
+        'DESC_MATERIA_PRIMA', 'MATERIAL', 'PESO'
+    ]
+    return df
+
+
 def convert_to_parent_child_format(input_filename, output_filename, root_assembly_code='G12100400'):
     """
-    Converts a hierarchical Bill of Materials (BOM) CSV to a parent-child relationship CSV.
-    This version is designed to be called from a GUI.
+    Converts a hierarchical Bill of Materials (BOM) file to a parent-child relationship CSV.
     """
     try:
-        # Load the CSV by skipping the first blank row and without treating
-        # any specific row as the header. This ensures all data is read.
-        df_structure = pd.read_csv(input_filename, header=None, skiprows=1)
+        # Use the new processing function to read the file
+        df_structure = process_file(input_filename)
 
-        # Assign clear, consistent column names manually for easy access.
-        df_structure.columns = [
-            'NIVEL', 'QTD', 'DESCRICAO', 'CODIGO', 'MATERIA_PRIMA',
-            'DESC_MATERIA_PRIMA', 'MATERIAL', 'PESO'
-        ]
-
-        # This dictionary tracks the current parent code at each hierarchy level.
         parent_tracker = {-1: root_assembly_code}
         output_data = []
 
-        # Iterate through each component in the input structure file.
         for index, row in df_structure.iterrows():
             level_str = str(row['NIVEL'])
             child_code = row['CODIGO']
@@ -48,8 +63,10 @@ def convert_to_parent_child_format(input_filename, output_filename, root_assembl
 
     except FileNotFoundError:
         return False, f"Error: The file '{input_filename}' was not found."
+    except ValueError as ve:
+        return False, str(ve)
     except KeyError as e:
-        return False, f"Error: A hierarchy level was likely skipped in the input file, leading to a missing parent. Details: {e}"
+        return False, f"Error: A hierarchy level was likely skipped or a column is missing. Details: {e}"
     except Exception as e:
         return False, f"An unexpected error occurred: {e}"
 
@@ -61,29 +78,30 @@ class BomConverterApp:
         self.root.title("BOM Converter")
         self.root.geometry("400x250")
 
-        # Frame for widgets
         frame = tk.Frame(root, padx=10, pady=10)
         frame.pack(expand=True)
 
-        # Root Assembly Code Input
         tk.Label(frame, text="Root Assembly Code:").grid(row=0, column=0, sticky="w", pady=5)
         self.root_code_entry = tk.Entry(frame, width=30)
         self.root_code_entry.insert(0, "G12100400")
         self.root_code_entry.grid(row=0, column=1, pady=5)
 
-        # Main Button
         self.convert_button = tk.Button(frame, text="Select File and Convert", command=self.run_conversion, height=2,
                                         width=30)
         self.convert_button.grid(row=1, column=0, columnspan=2, pady=20)
 
-        # Status Label
-        self.status_label = tk.Label(frame, text="Please select a file to convert.", wraplength=380)
+        self.status_label = tk.Label(frame, text="Please select an Excel or CSV file to convert.", wraplength=380)
         self.status_label.grid(row=2, column=0, columnspan=2, pady=10)
 
     def run_conversion(self):
         input_file = filedialog.askopenfilename(
-            title="Select the Hierarchical BOM CSV File",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            title="Select the Hierarchical BOM File",
+            # **UPDATED:** Now includes Excel files and makes them the default
+            filetypes=(
+                ("Excel files", "*.xlsx *.xls"),
+                ("CSV files", "*.csv"),
+                ("All files", "*.*")
+            )
         )
 
         if not input_file:
@@ -95,12 +113,10 @@ class BomConverterApp:
             messagebox.showerror("Error", "Root Assembly Code cannot be empty.")
             return
 
-        # Propose an output filename
         directory, filename = os.path.split(input_file)
-        name, ext = os.path.splitext(filename)
+        name, _ = os.path.splitext(filename)
         output_file = os.path.join(directory, f"{name}_converted.csv")
 
-        # Run the conversion logic
         success, message = convert_to_parent_child_format(input_file, output_file, root_code)
 
         if success:
@@ -108,11 +124,13 @@ class BomConverterApp:
             self.status_label.config(text="Ready for next conversion.")
         else:
             messagebox.showerror("Error", message)
-            self.status_label.config(text="An error occurred.")
+            self.status_label.config(text="An error occurred during conversion.")
 
 
 # --- SCRIPT EXECUTION ---
 if __name__ == "__main__":
+    # You need to install the 'openpyxl' library for pandas to read .xlsx files
+    # Run this command in your terminal: pip install openpyxl
     root = tk.Tk()
     app = BomConverterApp(root)
     root.mainloop()

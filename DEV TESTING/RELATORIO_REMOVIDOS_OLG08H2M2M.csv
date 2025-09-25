@@ -1,0 +1,11 @@
+﻿MOTIVO;LINHA_XLSX;ITEM;QTD;N° DESENHO;CODIGO MP20
+Cabeçalho do arquivo XLSX;1;Cabeçalho;N/A;"ITEM;QTD;N° DESENHO;CODIGO MP20";N/A
+'^' em N° DESENHO;220;1.4.1.12.1.1;1;          CAMISA^OLZ-02-0047;
+'^' em N° DESENHO;271;1.4.2.12.1.1;1;          CAMISA^OLZ-02-0046;
+'^' em N° DESENHO;354;1.5.1.1;1;      CAMISA^OLZ-02-0048;
+'^' em N° DESENHO;366;1.6.1.1;1;      CAMISA^OLZ-02-0049;
+'^' em N° DESENHO;394;1.8.2.1.1;1;        CAMISA^OLZ-02-0096;
+'^' em N° DESENHO;418;1.9.2.1.1;1;        CAMISA^OLZ-02-0097;
+=== RESUMO ESTATÍSTICO ===;N/A;Total linhas XLSX (com cabeçalho): 620;Linhas de dados: 619;Linhas CSV geradas: 593;Removidas: 7 | Duplicatas: 0 | Consolidadas: 0
+=== DETALHAMENTO REMOÇÕES ===;N/A;"Ignoradas por ""^"": 6";Sem código válido: 0;Nível inválido: 0;Válidas processadas: 613
+=== ANÁLISE MATEMÁTICA ===;N/A;Total entrada: 620;Total excluídas: 7;Total saída: 593;Diferença: 20
